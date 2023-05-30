@@ -1,0 +1,24 @@
+---
+services:
+  uda-http:
+    extends:
+      service: uda-http
+      file: ./apps/uda/docker-compose.yml
+    build:
+      additional_contexts:
+        pkg: ./pkg
+    volumes:
+      - ./apps/uda:/usr/src/app
+      - ./pkg:/usr/pkg
+      - ./.env:/usr/src/app/.env
+    environment:
+      UDA_HTTP_BASE_URL: /uda
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.uda-http.rule=PathPrefix(`/uda`)"
+      - "traefik.http.routers.uda-http.entrypoints=web"
+      - "traefik.http.services.uda-http.loadbalancer.server.port=8000"
+      - "traefik.http.services.uda-http.loadbalancer.healthCheck.port=8000"
+      - "traefik.http.services.uda-http.loadbalancer.healthCheck.path=/uda/health"
+      - "traefik.http.services.uda-http.loadbalancer.healthCheck.interval=10s"
+      - "traefik.http.services.uda-http.loadbalancer.healthCheck.timeout=500ms"

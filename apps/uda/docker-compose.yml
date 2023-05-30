@@ -1,0 +1,17 @@
+---
+services:
+  uda-http:
+    build:
+      target: dev
+      dockerfile: Dockerfile
+      context: .
+    command: go run main.go http -e .env
+
+  uda-db:
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    environment:
+      POSTGRES_PASSWORD: uda-password
+      POSTGRES_DB: uda
+      POSTGRES_USER: uda
