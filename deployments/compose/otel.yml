@@ -1,0 +1,89 @@
+version: '3.7'
+
+x-default-logging: &logging
+  driver: "json-file"
+  options:
+    max-size: "5m"
+    max-file: "2"
+
+services:
+  # Jaeger
+  jaeger:
+    profiles:
+      - all
+    image: jaegertracing/all-in-one:latest
+    hostname: jaeger
+    command:
+      - "--memory.max-traces"
+      - "10000"
+      - "--query.ui-config"
+      - "/etc/jaeger/jaeger-ui.json"
+      - "--prometheus.server-url"
+      - "http://prometheus:9090"
+    environment:
+      - METRICS_STORAGE_TYPE=prometheus
+      - COLLECTOR_OTLP_ENABLED=true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jaeger.rule=Host(`${JAEGER_URL}`)"
+      - "traefik.http.routers.jaeger.entrypoints=web"
+      - "traefik.http.services.jaeger.loadbalancer.server.port=16686"
+    volumes:
+      - ./deployments/compose/configs/jaeger-ui.json:/etc/jaeger/jaeger-ui.json
+    # ports:
+    #   - "14250:14250"
+    #   - "4317"
+    logging: *logging
+
+  # Collector
+  otel:
+    profiles:
+      - all
+    image: otel/opentelemetry-collector-contrib:latest
+    hostname: otel
+    command:
+      - "--config=/etc/otelcol/otel-collector-config.yaml"
+    volumes:
+      - ./deployments/compose/configs/otel-collector-config.yaml:/etc/otelcol/otel-collector-config.yaml
+    depends_on:
+      - jaeger
+    deploy:
+      resources:
+        limits:
+          memory: 125M
+    restart: unless-stopped
+    # ports:
+    #   - "4317"          # OTLP over gRPC receiver
+    #   - "4318:4318"     # OTLP over HTTP receiver
+    #   - "9464"          # Prometheus exporter
+    #   - "8888"          # metrics endpoint
+    logging: *logging
+
+  prometheus:
+    profiles:
+      - all
+    hostname: prometheus
+    image: quay.io/prometheus/prometheus:v2.43.0
+    command:
+      - --web.console.templates=/etc/prometheus/consoles
+      - --web.console.libraries=/etc/prometheus/console_libraries
+      - --storage.tsdb.retention.time=1h
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+      - --web.route-prefix=/
+      - --enable-feature=exemplar-storage
+    volumes:
+      - ./deployments/compose/configs/prometheus.yaml:/etc/prometheus/prometheus.yml
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.rule=Host(`${PROMETHEUS_URL}`)"
+      - "traefik.http.routers.prometheus.entrypoints=web"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+    logging: *logging
+    # ports:
+    #   - "9090:9090"

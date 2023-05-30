@@ -1,0 +1,12 @@
+[submodule "inspire/supabase_auth"]
+	path = inspire/supabase_auth
+	url = git@github.com:supabase/auth.git
+[submodule "inspire/gotrue"]
+	path = inspire/gotrue
+	url = git@github.com:netlify/gotrue.git
+[submodule "templates/fe-template"]
+	path = templates/fe-template
+	url = git@gitlab.com:startupbuilder/fe-template.git
+[submodule "templates/py-template"]
+	path = templates/py-template
+	url = git@gitlab.com:startupbuilder/py-template.git

@@ -1,0 +1,14 @@
+version: '3.9'
+services:
+  identity-http:
+    extends:
+      file: compose-builder.yml
+      service: builder
+    command: go run main.go identity http
+    ports: ['8000:8000']
+  auth-http:
+    extends:
+      file: compose-builder.yml
+      service: builder
+    command: go run main.go auth -e .env http
+    ports: ['8001:8000']

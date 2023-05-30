@@ -1,0 +1,18 @@
+version: '3.7'
+
+services:
+  permify:
+    profiles:
+      - all
+    image: ghcr.io/permify/permify
+    command:
+      - "serve"
+      - "--config"
+      - "/etc/permify/permify.yaml"
+    volumes:
+      - "./deployments/compose/configs/permify.yaml:/etc/permify/permify.yaml"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.permify.rule=Host(`$PERMIFY_URL`)"
+      - "traefik.http.routers.permify.entrypoints=web"
+      - "traefik.http.services.permify.loadbalancer.server.port=3476"
